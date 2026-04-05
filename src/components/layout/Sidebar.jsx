@@ -1,25 +1,80 @@
-import { NavLink, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth'
-import styles from './Sidebar.module.css'
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import styles from "./Sidebar.module.css";
 
-const navItems = [
-  { to: '/dashboard',  label: 'Dashboard',   icon: '▦' },
-  { to: '/ninos',      label: 'Niños',        icon: '◉' },
-  { to: '/tutores',    label: 'Tutores',      icon: '◈' },
-  { to: '/asistencia', label: 'Asistencia',   icon: '◷' },
-  { to: '/salud',      label: 'Salud',        icon: '♥' },
-  { to: '/servicios',  label: 'Servicios',    icon: '◆' },
-  { to: '/pagos',      label: 'Pagos',        icon: '◎' },
-]
+// Cada item tiene un array de roles que pueden verlo
+const NAV_ITEMS = [
+  {
+    to: "/dashboard",
+    label: "Dashboard",
+    icon: "▦",
+    roles: ["Administrador", "Personal", "Tutor"],
+  },
+  {
+    to: "/ninos",
+    label: "Niños",
+    icon: "◉",
+    roles: ["Administrador", "Personal"],
+  },
+  { to: "/tutores", label: "Tutores", icon: "◈", roles: ["Administrador"] },
+  {
+    to: "/salas",
+    label: "Salas",
+    icon: "▤",
+    roles: ["Administrador", "Personal"],
+  },
+  {
+    to: "/asistencia",
+    label: "Asistencia",
+    icon: "◷",
+    roles: ["Administrador", "Personal"],
+  },
+  {
+    to: "/salud",
+    label: "Salud",
+    icon: "♥",
+    roles: ["Administrador", "Personal"],
+  },
+  {
+    to: "/actividades",
+    label: "Actividades",
+    icon: "★",
+    roles: ["Administrador", "Personal"],
+  },
+  { to: "/servicios", label: "Servicios", icon: "◆", roles: ["Administrador"] },
+  {
+    to: "/pagos",
+    label: "Pagos",
+    icon: "◎",
+    roles: ["Administrador", "Tutor"],
+  },
+  {
+    to: "/personas-autorizadas",
+    label: "Pers. autorizadas",
+    icon: "◈",
+    roles: ["Administrador", "Personal"],
+  },
+  {
+    to: "/usuarios",
+    label: "Usuarios",
+    icon: "◈",
+    roles: ["Administrador"],
+  },
+];
 
 export default function Sidebar() {
-  const { usuario, logout } = useAuth()
-  const navigate = useNavigate()
+  const { usuario, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const rol = usuario?.rol_nombre;
+
+  // Filtrar items según el rol del usuario
+  const itemsVisibles = NAV_ITEMS.filter((item) => item.roles.includes(rol));
 
   const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+    logout();
+    navigate("/login");
+  };
 
   return (
     <aside className={styles.sidebar}>
@@ -29,14 +84,14 @@ export default function Sidebar() {
         <span className={styles.brandName}>Guardería</span>
       </div>
 
-      {/* Navegación */}
+      {/* Navegación filtrada por rol */}
       <nav className={styles.nav}>
-        {navItems.map(item => (
+        {itemsVisibles.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `${styles.navItem} ${isActive ? styles.active : ''}`
+              `${styles.navItem} ${isActive ? styles.active : ""}`
             }
           >
             <span className={styles.navIcon}>{item.icon}</span>
@@ -61,5 +116,5 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
-  )
+  );
 }

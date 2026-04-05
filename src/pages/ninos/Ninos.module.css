@@ -1,0 +1,335 @@
+/* ── Página general ───────────────────────────────────────────── */
+.page       { display: flex; flex-direction: column; gap: 24px; }
+
+.pageHeader {
+  display: flex; align-items: center;
+  justify-content: space-between;
+}
+.pageTitle  { font-size: 22px; font-weight: 600; color: var(--color-text); }
+
+.btnPrimary {
+  padding: 9px 18px;
+  background: var(--color-primary);
+  color: #fff; border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: background .15s;
+}
+.btnPrimary:hover { background: var(--color-primary-dk); }
+
+.btnSecondary {
+  padding: 8px 16px;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px; color: var(--color-text-muted);
+  cursor: pointer; transition: all .15s;
+}
+.btnSecondary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btnDanger {
+  padding: 6px 12px;
+  background: none;
+  border: 1px solid #F09595;
+  border-radius: var(--radius-sm);
+  font-size: 13px; color: var(--color-danger);
+  cursor: pointer; transition: all .15s;
+}
+.btnDanger:hover { background: #FCEBEB; }
+
+/* ── Filtros ──────────────────────────────────────────────────── */
+.filters {
+  display: flex; gap: 12px; align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+.searchInput {
+  flex: 1; padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px; outline: none;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.searchInput:focus { border-color: var(--color-primary); }
+
+/* ── Tabla ────────────────────────────────────────────────────── */
+.tableWrap {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.table { width: 100%; border-collapse: collapse; }
+.table th {
+  background: var(--color-bg);
+  padding: 11px 16px;
+  text-align: left; font-size: 12px;
+  font-weight: 600; color: var(--color-text-muted);
+  text-transform: uppercase; letter-spacing: .04em;
+  border-bottom: 1px solid var(--color-border);
+}
+.table td {
+  padding: 12px 16px;
+  font-size: 14px; color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: var(--color-bg); }
+
+.ninoCell   { display: flex; align-items: center; gap: 10px; }
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--color-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 600; flex-shrink: 0;
+  overflow: hidden;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ninoNombre { font-weight: 500; }
+.ninoEdad   { font-size: 12px; color: var(--color-text-muted); }
+
+.actions    { display: flex; gap: 8px; }
+.btnIcon {
+  padding: 5px 10px; font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: none; cursor: pointer;
+  color: var(--color-text-muted);
+  transition: all .12s;
+}
+.btnIcon:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.empty {
+  padding: 40px; text-align: center;
+  color: var(--color-text-muted); font-size: 14px;
+}
+
+/* ── Modal / Drawer detalle ───────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 200;
+  display: flex; align-items: flex-start;
+  justify-content: flex-end;
+}
+.drawer {
+  width: 480px; height: 100vh;
+  background: var(--color-surface);
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0,0,0,.12);
+}
+.drawerHeader {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky; top: 0;
+  background: var(--color-surface);
+  z-index: 10;
+}
+.drawerTitle { font-size: 17px; font-weight: 600; }
+.btnClose {
+  padding: 6px 10px; font-size: 18px;
+  background: none; border: none;
+  cursor: pointer; color: var(--color-text-muted);
+}
+.drawerBody { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+/* Perfil en el drawer */
+.perfil {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+}
+.perfilAvatar {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--color-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; font-weight: 700; flex-shrink: 0;
+  overflow: hidden;
+}
+.perfilAvatar img { width: 100%; height: 100%; object-fit: cover; }
+.perfilNombre { font-size: 18px; font-weight: 600; }
+.perfilMeta   { font-size: 13px; color: var(--color-text-muted); margin-top: 2px; }
+
+/* Sección dentro del drawer */
+.section { display: flex; flex-direction: column; gap: 10px; }
+.sectionHeader {
+  display: flex; align-items: center;
+  justify-content: space-between;
+}
+.sectionTitle {
+  font-size: 13px; font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+
+/* Info médica */
+.infoMedica {
+  padding: 12px 14px;
+  background: #FAEEDA;
+  border: 1px solid #FAC775;
+  border-radius: var(--radius-sm);
+  font-size: 13px; color: #633806;
+  line-height: 1.6;
+}
+
+/* Lista tutores */
+.tutorItem {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+.tutorInfo   { display: flex; flex-direction: column; gap: 2px; }
+.tutorNombre { font-size: 14px; font-weight: 500; }
+.tutorRel    { font-size: 12px; color: var(--color-text-muted); }
+
+/* Lista personas autorizadas */
+.personaItem {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+.personaInfo  { display: flex; flex-direction: column; gap: 2px; }
+.personaNombre { font-size: 14px; font-weight: 500; }
+.personaCi    { font-size: 12px; color: var(--color-text-muted); }
+
+/* Sala asignada */
+.salaCard {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: #E1F5EE;
+  border: 1px solid #5DCAA5;
+  border-radius: var(--radius-sm);
+}
+.salaIcon  { font-size: 20px; }
+.salaNombre { font-size: 14px; font-weight: 500; color: #0F6E56; }
+.salaEdades { font-size: 12px; color: #1D9E75; }
+
+/* ── Formulario ───────────────────────────────────────────────── */
+.formPage {
+  max-width: 720px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+.formCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.formCardTitle {
+  font-size: 15px; font-weight: 600;
+  color: var(--color-text);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+.formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.formField { display: flex; flex-direction: column; gap: 6px; }
+.formField.full { grid-column: 1 / -1; }
+.label { font-size: 13px; font-weight: 500; color: var(--color-text); }
+.input, .textarea, .select {
+  padding: 9px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px; color: var(--color-text);
+  background: var(--color-bg); outline: none;
+  transition: border-color .15s;
+  font-family: inherit;
+}
+.input:focus, .textarea:focus, .select:focus {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+}
+.textarea { resize: vertical; min-height: 80px; }
+
+/* Foto upload */
+.fotoBox {
+  display: flex; align-items: center; gap: 16px;
+}
+.fotoPreview {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--color-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; font-weight: 700; overflow: hidden;
+  flex-shrink: 0;
+}
+.fotoPreview img { width: 100%; height: 100%; object-fit: cover; }
+.fotoActions { display: flex; flex-direction: column; gap: 8px; }
+.fotoBtn {
+  padding: 7px 14px; font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: none; cursor: pointer;
+  color: var(--color-text-muted);
+}
+.fotoBtn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+/* Vincular tutor search */
+.searchBox { display: flex; gap: 8px; }
+.searchResults {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 160px; overflow-y: auto;
+}
+.searchResultItem {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+.btnAdd {
+  padding: 4px 10px; font-size: 12px;
+  background: var(--color-primary); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+/* Persona autorizada mini form */
+.miniForm {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  padding: 14px;
+  background: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.miniForm .full { grid-column: 1 / -1; }
+
+/* Acciones del formulario */
+.formActions {
+  display: flex; gap: 12px; justify-content: flex-end;
+}
+
+/* Mensajes */
+.msgOk {
+  padding: 10px 14px;
+  background: #EAF3DE; border: 1px solid #97C459;
+  border-radius: var(--radius-sm);
+  font-size: 13px; color: #3B6D11;
+}
+.msgErr {
+  padding: 10px 14px;
+  background: #FCEBEB; border: 1px solid #F09595;
+  border-radius: var(--radius-sm);
+  font-size: 13px; color: #A32D2D;
+}
