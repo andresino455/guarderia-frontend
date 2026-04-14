@@ -17,6 +17,8 @@ import PagosList from "../pages/pagos/PagosList";
 import PagosForm from "../pages/pagos/PagosForm";
 import PersonasAutorizadasList from "../pages/personas-autorizadas/PersonasAutorizadasList";
 import UsuariosList from "../pages/usuarios/UsuariosList";
+import RetirosPage from "../pages/retiros/RetirosPage";
+import SalasList from "../pages/salas/SalasList";
 
 export default function AppRouter() {
   return (
@@ -56,6 +58,9 @@ export default function AppRouter() {
             path="/personas-autorizadas"
             element={<PersonasAutorizadasList />}
           />
+
+          <Route path="/retiros" element={<RetirosPage />} />
+          <Route path="/salas" element={<SalasList />} />
         </Route>
       </Route>
 

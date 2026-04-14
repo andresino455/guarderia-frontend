@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
   getNino,
   crearNino,
@@ -29,6 +30,40 @@ const PERSONA_INICIAL = {
   codigo_seguridad: "",
 };
 
+// ─── Validación del formulario (del trabajo 2) ────────────────────────────────
+function validarForm(form) {
+  const errors = {};
+  if (!form.nombre.trim()) errors.nombre = "El nombre es obligatorio.";
+  if (!form.fecha_nacimiento)
+    errors.fecha_nacimiento = "La fecha de nacimiento es obligatoria.";
+  return errors;
+}
+
+// ─── Helper extractor de errores de API (del trabajo 2) ───────────────────────
+function extraerMensajeError(error) {
+  const data = error?.response?.data;
+  const status = error?.response?.status;
+
+  if (status === 500) return "Error interno del servidor. Revisa el backend.";
+
+  if (typeof data === "string") {
+    const texto = data.trim();
+    if (texto.startsWith("<!DOCTYPE html") || texto.startsWith("<html"))
+      return "Error interno del servidor. El backend devolvió una página HTML.";
+    return texto || "Ocurrió un error al guardar.";
+  }
+
+  if (data?.detail) return data.detail;
+
+  if (data && typeof data === "object") {
+    const firstValue = Object.values(data)[0];
+    if (Array.isArray(firstValue)) return firstValue[0];
+    if (typeof firstValue === "string") return firstValue;
+  }
+
+  return "Error al guardar.";
+}
+
 export default function NinosForm() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -36,6 +71,7 @@ export default function NinosForm() {
   const fotoRef = useRef();
 
   const [form, setForm] = useState(FORM_INICIAL);
+  const [errors, setErrors] = useState({}); // validación inline (del trabajo 2)
   const [fotoPreview, setFotoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -45,7 +81,6 @@ export default function NinosForm() {
   const [busqTutor, setBusqTutor] = useState("");
   const [resultTutores, setResultTutores] = useState([]);
   const [relacionTutor, setRelacionTutor] = useState("");
-  // Agregar junto a los otros estados al inicio del componente
   const [tutorElegido, setTutorElegido] = useState(null);
   const [relacionInicial, setRelacionInicial] = useState("");
 
@@ -56,7 +91,6 @@ export default function NinosForm() {
 
   // Salas
   const [salas, setSalas] = useState([]);
-  const [salaActual, setSalaActual] = useState(null);
   const [salaElegida, setSalaElegida] = useState("");
 
   // Cargar datos si es edición
@@ -82,7 +116,7 @@ export default function NinosForm() {
       .finally(() => setLoading(false));
   }, [id, esEditar]);
 
-  // Buscar tutores en tiempo real
+  // Buscar tutores con debounce
   useEffect(() => {
     if (busqTutor.length < 2) {
       setResultTutores([]);
@@ -95,7 +129,10 @@ export default function NinosForm() {
   }, [busqTutor]);
 
   const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    // Limpiar error del campo al escribir (del trabajo 2)
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleFoto = (e) => {
@@ -111,6 +148,14 @@ export default function NinosForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validación inline antes de enviar (del trabajo 2)
+    const nuevosErrores = validarForm(form);
+    if (Object.keys(nuevosErrores).length > 0) {
+      setErrors(nuevosErrores);
+      return;
+    }
+
     setMsg(null);
     setLoading(true);
     try {
@@ -120,8 +165,6 @@ export default function NinosForm() {
       } else {
         const { data } = await crearNino(form);
         ninoId = data.id_nino;
-
-        // Vincular tutor preseleccionado si se eligió uno
         if (tutorElegido) {
           await vincularTutor(ninoId, {
             id_tutor: tutorElegido.id_tutor,
@@ -130,22 +173,30 @@ export default function NinosForm() {
         }
       }
 
-      // Asignar sala si se eligió una
       if (salaElegida) {
         await asignarSala(salaElegida, { id_nino: ninoId });
       }
 
-      setMsg({
-        tipo: "ok",
-        texto: esEditar ? "Niño actualizado." : "Niño creado correctamente.",
+      // SweetAlert2 en lugar de mensaje inline (del trabajo 2)
+      await Swal.fire({
+        icon: "success",
+        title: "Éxito",
+        text: esEditar
+          ? "Niño actualizado correctamente."
+          : "Niño creado correctamente.",
+        confirmButtonColor: "#2563eb",
+        timer: 1800,
+        showConfirmButton: false,
       });
-      setTimeout(() => navigate("/ninos"), 1200);
+      navigate("/ninos");
     } catch (err) {
-      const detail =
-        err.response?.data?.detail ||
-        Object.values(err.response?.data ?? {})[0]?.[0] ||
-        "Error al guardar.";
-      setMsg({ tipo: "err", texto: detail });
+      const detail = extraerMensajeError(err);
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: detail,
+        confirmButtonColor: "#dc2626",
+      });
     } finally {
       setLoading(false);
     }
@@ -169,8 +220,13 @@ export default function NinosForm() {
       setBusqTutor("");
       setRelacionTutor("");
       setResultTutores([]);
-    } catch {
-      setMsg({ tipo: "err", texto: "No se pudo vincular el tutor." });
+    } catch (err) {
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: extraerMensajeError(err),
+        confirmButtonColor: "#dc2626",
+      });
     }
   };
 
@@ -200,11 +256,7 @@ export default function NinosForm() {
       setNuevaPersona(PERSONA_INICIAL);
       setMostrarFormPersona(false);
     } catch (err) {
-      const detail =
-        err.response?.data?.detail ||
-        Object.values(err.response?.data ?? {})[0]?.[0] ||
-        "Error al agregar.";
-      setMsg({ tipo: "err", texto: detail });
+      setMsg({ tipo: "err", texto: extraerMensajeError(err) });
     }
   };
 
@@ -234,6 +286,7 @@ export default function NinosForm() {
         </button>
       </div>
 
+      {/* Mensajes locales (solo para personas autorizadas, el resto usa Swal) */}
       {msg && (
         <div className={msg.tipo === "ok" ? styles.msgOk : styles.msgErr}>
           {msg.texto}
@@ -294,7 +347,14 @@ export default function NinosForm() {
                 onChange={handleChange}
                 className={styles.input}
                 placeholder="Nombre del niño"
+                style={errors.nombre ? { borderColor: "#dc2626" } : {}}
               />
+              {/* Error inline (del trabajo 2) */}
+              {errors.nombre && (
+                <span style={{ color: "#dc2626", fontSize: 12 }}>
+                  {errors.nombre}
+                </span>
+              )}
             </div>
 
             <div className={styles.formField}>
@@ -306,7 +366,15 @@ export default function NinosForm() {
                 value={form.fecha_nacimiento}
                 onChange={handleChange}
                 className={styles.input}
+                style={
+                  errors.fecha_nacimiento ? { borderColor: "#dc2626" } : {}
+                }
               />
+              {errors.fecha_nacimiento && (
+                <span style={{ color: "#dc2626", fontSize: 12 }}>
+                  {errors.fecha_nacimiento}
+                </span>
+              )}
             </div>
 
             <div className={`${styles.formField} ${styles.full}`}>
@@ -343,13 +411,12 @@ export default function NinosForm() {
           </div>
         </div>
 
-        {/* Tutor — disponible al crear Y al editar */}
+        {/* Tutor */}
         <div className={styles.formCard}>
           <div className={styles.formCardTitle}>
             {esEditar ? "Tutores vinculados" : "Vincular tutor"}
           </div>
 
-          {/* Tutores ya vinculados (solo edición) */}
           {esEditar &&
             tutores.map((t) => (
               <div key={t.id_tutor} className={styles.tutorItem}>
@@ -365,7 +432,6 @@ export default function NinosForm() {
             </p>
           )}
 
-          {/* Tutor preseleccionado (solo creación) */}
           {!esEditar && tutorElegido && (
             <div className={styles.tutorItem} style={{ marginBottom: 12 }}>
               <div className={styles.tutorInfo}>
@@ -390,7 +456,6 @@ export default function NinosForm() {
             </div>
           )}
 
-          {/* Buscador */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <label className={styles.label}>
               {esEditar ? "Buscar tutor para vincular" : "Buscar tutor"}
@@ -436,7 +501,6 @@ export default function NinosForm() {
                       if (esEditar) {
                         handleVincularTutor(t);
                       } else {
-                        // En creación solo guardamos la selección
                         setTutorElegido(t);
                         setRelacionInicial(relacionTutor);
                         setBusqTutor("");
@@ -452,6 +516,7 @@ export default function NinosForm() {
             </div>
           </div>
         </div>
+
         {/* Botón guardar */}
         <div className={styles.formActions}>
           <button
@@ -475,78 +540,10 @@ export default function NinosForm() {
         </div>
       </form>
 
-      {/* Vincular tutores — solo en edición */}
-      {esEditar && (
-        <div className={styles.formCard}>
-          <div className={styles.formCardTitle}>Tutores vinculados</div>
-
-          {tutores.map((t) => (
-            <div key={t.id_tutor} className={styles.tutorItem}>
-              <div className={styles.tutorInfo}>
-                <span className={styles.tutorNombre}>{t.tutor_nombre}</span>
-                <span className={styles.tutorRel}>{t.relacion ?? "—"}</span>
-              </div>
-            </div>
-          ))}
-          {!tutores.length && (
-            <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
-              Sin tutores vinculados.
-            </p>
-          )}
-
-          <div
-            style={{
-              marginTop: 12,
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-            }}
-          >
-            <label className={styles.label}>Buscar tutor para vincular</label>
-            <div className={styles.searchBox}>
-              <input
-                type="text"
-                placeholder="Nombre del tutor..."
-                value={busqTutor}
-                onChange={(e) => setBusqTutor(e.target.value)}
-                className={styles.input}
-                style={{ flex: 1 }}
-              />
-              <input
-                type="text"
-                placeholder="Relación (ej: madre)"
-                value={relacionTutor}
-                onChange={(e) => setRelacionTutor(e.target.value)}
-                className={styles.input}
-                style={{ width: 160 }}
-              />
-            </div>
-            <div className={styles.searchResults}>
-              {resultTutores.map((t) => (
-                <div key={t.id_tutor} className={styles.searchResultItem}>
-                  <span>
-                    {t.nombre} — CI: {t.ci}
-                  </span>
-                  <button
-                    type="button"
-                    className={styles.btnAdd}
-                    onClick={() => handleVincularTutor(t)}
-                  >
-                    Vincular
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Personas autorizadas — solo en edición */}
       {esEditar && (
         <div className={styles.formCard}>
-          <div className={styles.formCardTitle}>
-            Personas autorizadas a recoger
-          </div>
+          <div className={styles.formCardTitle}>Personas autorizadas</div>
 
           {personas.map((p) => (
             <div key={p.id_persona} className={styles.personaItem}>
@@ -557,7 +554,6 @@ export default function NinosForm() {
                 </span>
               </div>
               <button
-                type="button"
                 className={styles.btnDanger}
                 onClick={() => handleEliminarPersona(p.id_persona)}
               >
@@ -584,53 +580,41 @@ export default function NinosForm() {
 
           {mostrarFormPersona && (
             <div className={styles.miniForm}>
-              <div className={styles.formField}>
-                <label className={styles.label}>Nombre *</label>
-                <input
-                  value={nuevaPersona.nombre}
-                  onChange={(e) =>
-                    setNuevaPersona((p) => ({ ...p, nombre: e.target.value }))
-                  }
-                  className={styles.input}
-                  placeholder="Nombre completo"
-                />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.label}>CI *</label>
-                <input
-                  value={nuevaPersona.ci}
-                  onChange={(e) =>
-                    setNuevaPersona((p) => ({ ...p, ci: e.target.value }))
-                  }
-                  className={styles.input}
-                  placeholder="Cédula de identidad"
-                />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.label}>Teléfono</label>
-                <input
-                  value={nuevaPersona.telefono}
-                  onChange={(e) =>
-                    setNuevaPersona((p) => ({ ...p, telefono: e.target.value }))
-                  }
-                  className={styles.input}
-                  placeholder="Número de contacto"
-                />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.label}>Código de seguridad *</label>
-                <input
-                  value={nuevaPersona.codigo_seguridad}
-                  onChange={(e) =>
-                    setNuevaPersona((p) => ({
-                      ...p,
-                      codigo_seguridad: e.target.value,
-                    }))
-                  }
-                  className={styles.input}
-                  placeholder="Código para verificar identidad"
-                />
-              </div>
+              {[
+                {
+                  label: "Nombre *",
+                  key: "nombre",
+                  placeholder: "Nombre completo",
+                },
+                {
+                  label: "CI *",
+                  key: "ci",
+                  placeholder: "Cédula de identidad",
+                },
+                {
+                  label: "Teléfono",
+                  key: "telefono",
+                  placeholder: "Número de contacto",
+                },
+                {
+                  label: "Código de seguridad *",
+                  key: "codigo_seguridad",
+                  placeholder: "Código para verificar identidad",
+                },
+              ].map(({ label, key, placeholder }) => (
+                <div className={styles.formField} key={key}>
+                  <label className={styles.label}>{label}</label>
+                  <input
+                    value={nuevaPersona[key]}
+                    onChange={(e) =>
+                      setNuevaPersona((p) => ({ ...p, [key]: e.target.value }))
+                    }
+                    className={styles.input}
+                    placeholder={placeholder}
+                  />
+                </div>
+              ))}
+
               <div className={`${styles.formActions} ${styles.full}`}>
                 <button
                   type="button"

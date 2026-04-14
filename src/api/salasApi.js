@@ -1,0 +1,16 @@
+import api from './axiosConfig'
+
+export const getSalas          = (params) => api.get('/salas/', { params })
+export const getSala           = (id)     => api.get(`/salas/${id}/`)
+export const crearSala         = (data)   => api.post('/salas/', data)
+export const editarSala        = (id, data) => api.patch(`/salas/${id}/`, data)
+export const eliminarSala      = (id)     => api.delete(`/salas/${id}/`)
+export const getResumenSalas   = ()       => api.get('/salas/resumen/')
+export const getNinosSala      = (id)     => api.get(`/salas/${id}/ninos/`)
+export const asignarNino       = (id, data) => api.post(`/salas/${id}/asignar-nino/`, data)
+export const asignarPersonal   = (id, data) => api.post(`/salas/${id}/asignar-personal/`, data)
+export const getPersonal       = (params) => api.get('/salas/personal/', { params })
+export const crearPersonal     = (data)   => api.post('/salas/personal/', data)
+export const editarPersonal    = (id, data) => api.patch(`/salas/personal/${id}/`, data)
+export const eliminarPersonal  = (id)     => api.delete(`/salas/personal/${id}/`)
+export const getNinos          = ()       => api.get('/ninos/')

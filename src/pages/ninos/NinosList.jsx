@@ -1,41 +1,141 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
   getNinos,
   eliminarNino,
   getTutoresNino,
   getPersonasAutorizadas,
+  getSalas,
 } from "../../api/ninosApi";
-import { getSalas } from "../../api/ninosApi";
 import styles from "./Ninos.module.css";
 
+// ─── Íconos SVG (del trabajo 2) ───────────────────────────────────────────────
+function EditIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M4 20H8L18.5 9.5C19.3 8.7 19.3 7.3 18.5 6.5L17.5 5.5C16.7 4.7 15.3 4.7 14.5 5.5L4 16V20Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function DeleteIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M3 6H21"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8 6V4C8 3.4 8.4 3 9 3H15C15.6 3 16 3.4 16 4V6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M19 6L18.3 18.1C18.2 19.2 17.3 20 16.2 20H7.8C6.7 20 5.8 19.2 5.7 18.1L5 6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10 11V17M14 11V17"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M2 12C3.8 8.5 7.4 6 12 6C16.6 6 20.2 8.5 22 12C20.2 15.5 16.6 18 12 18C7.4 18 3.8 15.5 2 12Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+// ─── Helpers de error (del trabajo 2) ────────────────────────────────────────
+function extraerMensajeError(error) {
+  const data = error?.response?.data;
+  const status = error?.response?.status;
+
+  if (status === 500) return "Error interno del servidor. Revisa el backend.";
+
+  if (typeof data === "string") {
+    const texto = data.trim();
+    if (texto.startsWith("<!DOCTYPE html") || texto.startsWith("<html"))
+      return "Error interno del servidor. El backend devolvió una página HTML.";
+    return texto || "Ocurrió un error.";
+  }
+
+  if (data?.detail) return data.detail;
+
+  if (data && typeof data === "object") {
+    const firstValue = Object.values(data)[0];
+    if (Array.isArray(firstValue)) return firstValue[0];
+    if (typeof firstValue === "string") return firstValue;
+  }
+
+  return "Ocurrió un error inesperado.";
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
 export default function NinosList() {
   const navigate = useNavigate();
 
   const [ninos, setNinos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState("");
-  const [detalle, setDetalle] = useState(null); // niño seleccionado
+  const [detalle, setDetalle] = useState(null);
   const [tutores, setTutores] = useState([]);
   const [personas, setPersonas] = useState([]);
   const [sala, setSala] = useState(null);
   const [loadDet, setLoadDet] = useState(false);
 
-  const cargarNinos = useCallback(() => {
-    setLoading(true);
-    getNinos()
-      .then(({ data }) => setNinos(data.results ?? data))
-      .finally(() => setLoading(false));
+  // Filtro con useMemo (del trabajo 2 — más eficiente)
+  const ninosFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+    if (!texto) return ninos;
+    return ninos.filter((n) => n.nombre?.toLowerCase().includes(texto));
+  }, [ninos, busqueda]);
+
+  const cargarNinos = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await getNinos();
+      setNinos(data.results ?? data);
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: extraerMensajeError(error),
+        confirmButtonColor: "#dc2626",
+      });
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     cargarNinos();
   }, [cargarNinos]);
-
-  // Filtro local por búsqueda
-  const ninosFiltrados = ninos.filter((n) =>
-    n.nombre.toLowerCase().includes(busqueda.toLowerCase()),
-  );
 
   const abrirDetalle = async (nino) => {
     setDetalle(nino);
@@ -43,7 +143,6 @@ export default function NinosList() {
     setTutores([]);
     setPersonas([]);
     setSala(null);
-
     try {
       const [t, p, s] = await Promise.all([
         getTutoresNino(nino.id_nino),
@@ -52,13 +151,12 @@ export default function NinosList() {
       ]);
       setTutores(t.data);
       setPersonas(p.data.results ?? p.data);
-
-      // Buscar sala asignada al niño
       const todasSalas = s.data.results ?? s.data;
-      const salaAsig = todasSalas.find((sala) =>
-        sala.asignaciones?.some((a) => a.id_nino === nino.id_nino),
+      setSala(
+        todasSalas.find((sala) =>
+          sala.asignaciones?.some((a) => a.id_nino === nino.id_nino),
+        ) ?? null,
       );
-      setSala(salaAsig ?? null);
     } finally {
       setLoadDet(false);
     }
@@ -71,18 +169,57 @@ export default function NinosList() {
     setSala(null);
   };
 
+  // Confirmación con SweetAlert2 (del trabajo 2)
   const handleEliminar = async (id) => {
-    if (!confirm("¿Seguro que querés eliminar este niño?")) return;
-    await eliminarNino(id);
-    cargarNinos();
-    if (detalle?.id_nino === id) cerrarDetalle();
+    const result = await Swal.fire({
+      icon: "warning",
+      title: "¿Eliminar niño?",
+      text: "Esta acción no se puede deshacer.",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await eliminarNino(id);
+      await Swal.fire({
+        icon: "success",
+        title: "Eliminado",
+        text: "El niño fue eliminado correctamente.",
+        confirmButtonColor: "#2563eb",
+      });
+      cargarNinos();
+      if (detalle?.id_nino === id) cerrarDetalle();
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: extraerMensajeError(error),
+        confirmButtonColor: "#dc2626",
+      });
+    }
   };
 
   return (
     <div className={styles.page}>
       {/* Encabezado */}
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Niños</h1>
+        <div>
+          <h1 className={styles.pageTitle}>Niños</h1>
+          <p
+            style={{
+              margin: "4px 0 0",
+              color: "var(--color-text-muted)",
+              fontSize: 14,
+            }}
+          >
+            Administra los niños registrados en el sistema.
+          </p>
+        </div>
         <button
           className={styles.btnPrimary}
           onClick={() => navigate("/ninos/nuevo")}
@@ -144,46 +281,49 @@ export default function NinosList() {
                         n.nombre.charAt(0)
                       )}
                     </div>
-                    <div>
-                      <div className={styles.ninoNombre}>{n.nombre}</div>
-                    </div>
+                    <div className={styles.ninoNombre}>{n.nombre}</div>
                   </div>
                 </td>
                 <td>{n.fecha_nacimiento}</td>
                 <td>{n.edad ?? "—"} años</td>
                 <td>
+                  {/* Badge mejorado del trabajo 2 */}
                   <span
                     style={{
                       fontSize: 12,
-                      fontWeight: 500,
-                      padding: "3px 8px",
-                      borderRadius: 10,
-                      background: n.activo ? "#EAF3DE" : "#F1EFE8",
-                      color: n.activo ? "#3B6D11" : "#5F5E5A",
+                      fontWeight: 700,
+                      padding: "4px 10px",
+                      borderRadius: 999,
+                      background: n.activo ? "#dcfce7" : "#fee2e2",
+                      color: n.activo ? "#166534" : "#991b1b",
                     }}
                   >
                     {n.activo ? "Activo" : "Inactivo"}
                   </span>
                 </td>
                 <td>
+                  {/* Botones con íconos SVG (del trabajo 2) */}
                   <div className={styles.actions}>
                     <button
                       className={styles.btnIcon}
                       onClick={() => abrirDetalle(n)}
+                      title="Ver detalle"
                     >
-                      Ver
+                      <EyeIcon />
                     </button>
                     <button
                       className={styles.btnIcon}
                       onClick={() => navigate(`/ninos/${n.id_nino}/editar`)}
+                      title="Editar"
                     >
-                      Editar
+                      <EditIcon />
                     </button>
                     <button
                       className={styles.btnDanger}
                       onClick={() => handleEliminar(n.id_nino)}
+                      title="Eliminar"
                     >
-                      Eliminar
+                      <DeleteIcon />
                     </button>
                   </div>
                 </td>
@@ -193,7 +333,7 @@ export default function NinosList() {
         </table>
       </div>
 
-      {/* Drawer de detalle */}
+      {/* Drawer de detalle (del trabajo 1, sin cambios) */}
       {detalle && (
         <div className={styles.overlay} onClick={cerrarDetalle}>
           <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
@@ -205,7 +345,6 @@ export default function NinosList() {
             </div>
 
             <div className={styles.drawerBody}>
-              {/* Perfil */}
               <div className={styles.perfil}>
                 <div className={styles.perfilAvatar}>
                   {detalle.foto ? (
@@ -222,7 +361,6 @@ export default function NinosList() {
                 </div>
               </div>
 
-              {/* Info médica */}
               {detalle.info_medica && (
                 <div className={styles.section}>
                   <div className={styles.sectionTitle}>Info médica</div>
@@ -230,7 +368,6 @@ export default function NinosList() {
                 </div>
               )}
 
-              {/* Sala asignada */}
               <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                   <span className={styles.sectionTitle}>Sala asignada</span>
@@ -259,7 +396,6 @@ export default function NinosList() {
                 )}
               </div>
 
-              {/* Tutores */}
               <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                   <span className={styles.sectionTitle}>
@@ -292,7 +428,6 @@ export default function NinosList() {
                 )}
               </div>
 
-              {/* Personas autorizadas */}
               <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                   <span className={styles.sectionTitle}>
@@ -323,7 +458,6 @@ export default function NinosList() {
                 )}
               </div>
 
-              {/* Acciones */}
               <div className={styles.formActions}>
                 <button
                   className={styles.btnSecondary}

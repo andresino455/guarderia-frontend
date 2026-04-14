@@ -60,6 +60,12 @@ const NAV_ITEMS = [
     icon: "◈",
     roles: ["Administrador"],
   },
+  {
+    to: "/retiros",
+    label: "Retiros",
+    icon: "🚪",
+    roles: ["Administrador", "Personal"],
+  },
 ];
 
 export default function Sidebar() {
