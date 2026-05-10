@@ -1,69 +1,31 @@
-import api from './axiosConfig'
+import api from "./axiosConfig";
 
-const BASE_PATH = '/salud/registros'
+export const getRegistrosSalud = (params) =>
+  api.get("/salud/registros/", { params });
+export const getRegistroSalud = (id) => api.get(`/salud/registros/${id}/`);
+export const crearRegistroSalud = (data) => api.post("/salud/registros/", data);
+export const editarRegistroSalud = (id, data) =>
+  api.patch(`/salud/registros/${id}/`, data);
+export const eliminarRegistroSalud = (id) =>
+  api.delete(`/salud/registros/${id}/`);
+export const getAlertasHoy = () => api.get("/salud/alertas-hoy/");
 
-/**
- * GET /salud/registros/
- * Lista registros de salud
- */
-export const getSaludRequest = async (params = {}) => {
-    const response = await api.get(`${BASE_PATH}/`, { params })
-    return response
-}
+export const getMedicaciones = (params) =>
+  api.get("/salud/medicacion/", { params });
+export const crearMedicacion = (data) => api.post("/salud/medicacion/", data);
+export const editarMedicacion = (id, data) =>
+  api.patch(`/salud/medicacion/${id}/`, data);
+export const eliminarMedicacion = (id) =>
+  api.delete(`/salud/medicacion/${id}/`);
+export const getMedicacionesHoy = () => api.get("/salud/medicacion/hoy/");
 
-/**
- * GET /salud/registros/:id/
- * Obtiene detalle de un registro de salud
- */
-export const getSaludByIdRequest = async (id) => {
-    const response = await api.get(`${BASE_PATH}/${id}/`)
-    return response
-}
+export const getAlimentaciones = (params) =>
+  api.get("/salud/alimentacion/", { params });
+export const crearAlimentacion = (data) =>
+  api.post("/salud/alimentacion/", data);
+export const editarAlimentacion = (id, data) =>
+  api.patch(`/salud/alimentacion/${id}/`, data);
+export const eliminarAlimentacion = (id) =>
+  api.delete(`/salud/alimentacion/${id}/`);
 
-/**
- * POST /salud/registros/
- * Crea un registro de salud
- */
-export const createSaludRequest = async (data) => {
-    console.log('📨 API → creando registro de salud:', data)
-    const response = await api.post(`${BASE_PATH}/`, data)
-    return response
-}
-
-/**
- * PUT /salud/registros/:id/
- * Actualiza un registro completo
- */
-export const updateSaludRequest = async (id, data) => {
-    console.log('📨 API → update salud:', id, data)
-    const response = await api.put(`${BASE_PATH}/${id}/`, data)
-    return response
-}
-
-/**
- * PATCH /salud/registros/:id/
- * Actualiza parcialmente un registro
- */
-export const patchSaludRequest = async (id, data) => {
-    console.log('📨 API → patch salud:', id, data)
-    const response = await api.patch(`${BASE_PATH}/${id}/`, data)
-    return response
-}
-
-/**
- * DELETE /salud/registros/:id/
- * Borrado lógico
- */
-export const deleteSaludRequest = async (id) => {
-    console.log('🗑️ API → eliminar salud:', id)
-    const response = await api.delete(`${BASE_PATH}/${id}/`)
-    return response
-}
-
-/**
- * GET /salud/registros/alertas-hoy/
- */
-export const getAlertasHoySaludRequest = async () => {
-    const response = await api.get(`${BASE_PATH}/alertas-hoy/`)
-    return response
-}
+export const getNinos = () => api.get("/ninos/");

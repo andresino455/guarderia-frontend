@@ -10,7 +10,6 @@ import TutoresForm from "../pages/tutores/TutoresForm";
 import AsistenciaList from "../pages/asistencia/AsistenciaList";
 import AsistenciaForm from "../pages/asistencia/AsistenciaForm";
 import SaludList from "../pages/salud/SaludList";
-import SaludForm from "../pages/salud/SaludForm";
 import ServiciosList from "../pages/servicios/ServiciosList";
 import ServiciosForm from "../pages/servicios/ServiciosForm";
 import PagosList from "../pages/pagos/PagosList";
@@ -19,6 +18,7 @@ import PersonasAutorizadasList from "../pages/personas-autorizadas/PersonasAutor
 import UsuariosList from "../pages/usuarios/UsuariosList";
 import RetirosPage from "../pages/retiros/RetirosPage";
 import SalasList from "../pages/salas/SalasList";
+import ActividadesList from "../pages/actividades/ActividadesList";
 
 export default function AppRouter() {
   return (
@@ -43,8 +43,6 @@ export default function AppRouter() {
           <Route path="/asistencia/nuevo" element={<AsistenciaForm />} />
 
           <Route path="/salud" element={<SaludList />} />
-          <Route path="/salud/nuevo" element={<SaludForm />} />
-          <Route path="/salud/:id/editar" element={<SaludForm />} />
 
           <Route path="/servicios" element={<ServiciosList />} />
           <Route path="/servicios/nuevo" element={<ServiciosForm />} />
@@ -58,6 +56,7 @@ export default function AppRouter() {
             path="/personas-autorizadas"
             element={<PersonasAutorizadasList />}
           />
+          <Route path="/actividades" element={<ActividadesList />} />
 
           <Route path="/retiros" element={<RetirosPage />} />
           <Route path="/salas" element={<SalasList />} />
