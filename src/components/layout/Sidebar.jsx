@@ -78,6 +78,12 @@ const NAV_ITEMS = [
     icon: "📋",
     roles: ["Administrador"],
   },
+  {
+    to: "/backup",
+    label: "Backup",
+    icon: "💾",
+    roles: ["Administrador"],
+  },
 ];
 
 export default function Sidebar() {

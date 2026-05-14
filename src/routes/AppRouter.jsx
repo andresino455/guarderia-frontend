@@ -20,8 +20,9 @@ import RetirosPage from "../pages/retiros/RetirosPage";
 import SalasList from "../pages/salas/SalasList";
 import ActividadesList from "../pages/actividades/ActividadesList";
 import ReportesPage from "../pages/reportes/ReportesPage";
-
+import BackupPage from "../pages/backup/BackupPage";
 import BitacoraPage from "../pages/auditoria/BitacoraPage";
+
 export default function AppRouter() {
   return (
     <Routes>
@@ -64,6 +65,7 @@ export default function AppRouter() {
           <Route path="/salas" element={<SalasList />} />
           <Route path="/reportes" element={<ReportesPage />} />
           <Route path="/bitacora" element={<BitacoraPage />} />
+          <Route path="/backup" element={<BackupPage />} />
         </Route>
       </Route>
 
