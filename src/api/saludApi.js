@@ -1,53 +1,43 @@
 import api from "./axiosConfig";
 
-// --- SALUD (Basado en router.register('registros', ...)) ---
 export const getRegistrosSalud = (params) =>
-  api.get("/registros/", { params });
+  api.get("/salud/registros/", { params });
 
-export const getRegistroSalud = (id) => 
-  api.get(`/registros/${id}/`);
+export const getRegistroSalud = (id) => api.get(`/salud/registros/${id}/`);
 
-export const crearRegistroSalud = (data) => 
-  api.post("/registros/", data);
+export const crearRegistroSalud = (data) => api.post("/salud/registros/", data);
 
 export const editarRegistroSalud = (id, data) =>
-  api.patch(`/registros/${id}/`, data);
+  api.patch(`/salud/registros/${id}/`, data);
 
 export const eliminarRegistroSalud = (id) =>
-  api.delete(`/registros/${id}/`);
+  api.delete(`/salud/registros/${id}/`);
 
-// Corregido: antes apuntaba a /salud/alertas-hoy/
-export const getAlertasHoy = () => 
-  api.get("/registros/alertas-hoy/");
+export const getAlertasHoy = () => api.get("/salud/registros/alertas-hoy/");
 
-// --- MEDICACIÓN (Basado en router.register('medicacion', ...)) ---
 export const getMedicaciones = (params) =>
-  api.get("/medicacion/", { params });
+  api.get("/salud/medicacion/", { params });
 
-export const crearMedicacion = (data) => 
-  api.post("/medicacion/", data);
+export const crearMedicacion = (data) => api.post("/salud/medicacion/", data);
 
 export const editarMedicacion = (id, data) =>
-  api.patch(`/medicacion/${id}/`, data);
+  api.patch(`/salud/medicacion/${id}/`, data);
 
 export const eliminarMedicacion = (id) =>
-  api.delete(`/medicacion/${id}/`);
+  api.delete(`/salud/medicacion/${id}/`);
 
-// Corregido: antes apuntaba a /salud/medicacion/hoy/
-export const getMedicacionesHoy = () => 
-  api.get("/medicacion/hoy/");
+export const getMedicacionesHoy = () => api.get("/salud/medicacion/hoy/");
 
-// --- ALIMENTACIÓN (Basado en router.register('alimentacion', ...)) ---
 export const getAlimentaciones = (params) =>
-  api.get("/alimentacion/", { params });
+  api.get("/salud/alimentacion/", { params });
 
 export const crearAlimentacion = (data) =>
-  api.post("/alimentacion/", data);
+  api.post("/salud/alimentacion/", data);
 
 export const editarAlimentacion = (id, data) =>
-  api.patch(`/alimentacion/${id}/`, data);
+  api.patch(`/salud/alimentacion/${id}/`, data);
 
 export const eliminarAlimentacion = (id) =>
-  api.delete(`/alimentacion/${id}/`);
+  api.delete(`/salud/alimentacion/${id}/`);
 
 export const getNinos = () => api.get("/ninos/");

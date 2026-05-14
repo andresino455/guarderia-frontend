@@ -66,6 +66,12 @@ const NAV_ITEMS = [
     icon: "🚪",
     roles: ["Administrador", "Personal"],
   },
+  {
+    to: "/reportes",
+    label: "Reportes",
+    icon: "📊",
+    roles: ["Administrador", "Personal"],
+  },
 ];
 
 export default function Sidebar() {

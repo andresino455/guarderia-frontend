@@ -63,8 +63,9 @@ export default function AsistenciaList() {
     setTimeout(() => setMsg(null), 3500);
   };
 
-  const cargarDatos = useCallback(async () => {
-    setLoading(true);
+  // Cambiá esta función para que no ponga setLoading en el reload post-acción
+  const cargarDatos = useCallback(async (mostrarCarga = true) => {
+    if (mostrarCarga) setLoading(true);
     try {
       const [a, h, n] = await Promise.all([
         getAsistencias(),
@@ -72,10 +73,10 @@ export default function AsistenciaList() {
         getNinos(),
       ]);
       setAsistencias(a.data.results ?? a.data);
-      setHoy(h.data);
+      setHoy({ ...h.data }); // ← spread para forzar nueva referencia
       setNinos(n.data.results ?? n.data);
     } finally {
-      setLoading(false);
+      if (mostrarCarga) setLoading(false);
     }
   }, []);
 
@@ -100,7 +101,7 @@ export default function AsistenciaList() {
       await checkinNino({ id_nino: ninoCheckin, estado: estadoCheckin });
       mostrarMsg("ok", "Entrada registrada correctamente.");
       setNinoCheckin("");
-      cargarDatos();
+      await cargarDatos(false); // ← false para no mostrar "Cargando..."
     } catch (err) {
       mostrarMsg(
         "err",
@@ -116,7 +117,7 @@ export default function AsistenciaList() {
     try {
       await checkoutNino(id_asistencia, { hora_salida: hora });
       mostrarMsg("ok", "Salida registrada.");
-      cargarDatos();
+      await cargarDatos(false); // ← false
     } catch (err) {
       mostrarMsg(
         "err",
@@ -177,7 +178,7 @@ export default function AsistenciaList() {
         await crearAsistencia(payload);
         mostrarMsg("ok", "Asistencia registrada.");
       }
-      cargarDatos();
+      await cargarDatos();
       cerrarModal();
     } catch (err) {
       const detail =
@@ -195,7 +196,7 @@ export default function AsistenciaList() {
     try {
       await eliminarAsistencia(id);
       mostrarMsg("ok", "Registro eliminado.");
-      cargarDatos();
+      await cargarDatos();
     } catch {
       mostrarMsg("err", "No se pudo eliminar.");
     }
@@ -280,7 +281,7 @@ export default function AsistenciaList() {
               <div className={styles.resumenIcon}>◉</div>
               <div>
                 <div className={styles.resumenValue}>
-                  {hoy?.total_presentes ?? 0}
+                  {loading ? "—" : (hoy?.total_presentes ?? 0)}
                 </div>
                 <div className={styles.resumenLabel}>Presentes</div>
               </div>
@@ -289,7 +290,7 @@ export default function AsistenciaList() {
               <div className={styles.resumenIcon}>◎</div>
               <div>
                 <div className={styles.resumenValue}>
-                  {hoy?.total_ausentes ?? 0}
+                  {loading ? "—" : (hoy?.total_ausentes ?? 0)}
                 </div>
                 <div className={styles.resumenLabel}>Ausentes</div>
               </div>
@@ -298,7 +299,7 @@ export default function AsistenciaList() {
               <div className={styles.resumenIcon}>◷</div>
               <div>
                 <div className={styles.resumenValue}>
-                  {hoy?.total_tardanzas ?? 0}
+                  {loading ? "—" : (hoy?.total_tardanzas ?? 0)}
                 </div>
                 <div className={styles.resumenLabel}>Tardanzas</div>
               </div>
@@ -307,7 +308,7 @@ export default function AsistenciaList() {
               <div className={styles.resumenIcon}>◈</div>
               <div>
                 <div className={styles.resumenValue}>
-                  {hoy?.sin_registro?.length ?? 0}
+                  {loading ? "—" : (hoy?.sin_registro?.length ?? 0)}
                 </div>
                 <div className={styles.resumenLabel}>Sin registro</div>
               </div>
@@ -319,6 +320,7 @@ export default function AsistenciaList() {
             <span className={styles.checkinTitle}>Check-in rápido</span>
             <div className={styles.checkinForm}>
               <select
+                key={hoy?.sin_registro?.length ?? 0} // ← key dinámica
                 value={ninoCheckin}
                 onChange={(e) => setNinoCheckin(e.target.value)}
                 className={styles.checkinSelect}

@@ -19,6 +19,7 @@ import UsuariosList from "../pages/usuarios/UsuariosList";
 import RetirosPage from "../pages/retiros/RetirosPage";
 import SalasList from "../pages/salas/SalasList";
 import ActividadesList from "../pages/actividades/ActividadesList";
+import ReportesPage from "../pages/reportes/ReportesPage";
 
 export default function AppRouter() {
   return (
@@ -60,6 +61,7 @@ export default function AppRouter() {
 
           <Route path="/retiros" element={<RetirosPage />} />
           <Route path="/salas" element={<SalasList />} />
+          <Route path="/reportes" element={<ReportesPage />} />
         </Route>
       </Route>
 
