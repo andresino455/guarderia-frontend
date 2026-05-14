@@ -72,6 +72,12 @@ const NAV_ITEMS = [
     icon: "📊",
     roles: ["Administrador", "Personal"],
   },
+  {
+    to: "/bitacora",
+    label: "Bitácora",
+    icon: "📋",
+    roles: ["Administrador"],
+  },
 ];
 
 export default function Sidebar() {
