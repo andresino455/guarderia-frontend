@@ -35,6 +35,75 @@ function rolClass(nombre) {
   return styles.rolDefault;
 }
 
+// ── Validador de contraseña ───────────────────────────────────────────────────
+function validarPassword(pwd) {
+  return {
+    longitud:  pwd.length >= 8,
+    mayuscula: /[A-Z]/.test(pwd),
+    minuscula: /[a-z]/.test(pwd),
+    numero:    /\d/.test(pwd),
+  };
+}
+
+function IndicadorPassword({ password }) {
+  if (!password) return null;
+
+  const v = validarPassword(password);
+  const items = [
+    { ok: v.longitud,  texto: "Mínimo 8 caracteres" },
+    { ok: v.mayuscula, texto: "Al menos una mayúscula" },
+    { ok: v.minuscula, texto: "Al menos una minúscula" },
+    { ok: v.numero,    texto: "Al menos un número" },
+  ];
+
+  const todos = Object.values(v).every(Boolean);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
+      {/* Barra de fortaleza */}
+      <div style={{ display: "flex", gap: 3, marginBottom: 2 }}>
+        {[...Array(4)].map((_, i) => {
+          const cumplidos = Object.values(v).filter(Boolean).length;
+          const colors = ["#E24B4A", "#BA7517", "#1D9E75", "#0F6E56"];
+          return (
+            <div
+              key={i}
+              style={{
+                flex: 1, height: 4, borderRadius: 2,
+                background: i < cumplidos ? colors[cumplidos - 1] : "var(--color-border)",
+                transition: "background .3s",
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Requisitos */}
+      {items.map((item) => (
+        <div
+          key={item.texto}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            fontSize: 12,
+            color: item.ok ? "#3B6D11" : "#A32D2D",
+          }}
+        >
+          <span style={{
+            width: 14, height: 14, borderRadius: "50%",
+            background: item.ok ? "#EAF3DE" : "#FCEBEB",
+            border: `1px solid ${item.ok ? "#97C459" : "#F09595"}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 9, fontWeight: 700, flexShrink: 0,
+          }}>
+            {item.ok ? "✓" : "✕"}
+          </span>
+          {item.texto}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function UsuariosList() {
   const [tab, setTab] = useState("usuarios");
   const [usuarios, setUsuarios] = useState([]);
@@ -73,9 +142,7 @@ export default function UsuariosList() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    cargarDatos();
-  }, [cargarDatos]);
+  useEffect(() => { cargarDatos(); }, [cargarDatos]);
 
   const mostrarMsg = (tipo, texto, global = true) => {
     if (global) {
@@ -106,11 +173,11 @@ export default function UsuariosList() {
   const abrirEditar = (u) => {
     setEditando(u);
     setForm({
-      nombre: u.nombre,
-      email: u.email,
+      nombre:   u.nombre,
+      email:    u.email,
       password: "",
-      id_rol: u.id_rol,
-      activo: u.activo,
+      id_rol:   u.id_rol,
+      activo:   u.activo,
     });
     setModalMsg(null);
     setModal(true);
@@ -123,32 +190,39 @@ export default function UsuariosList() {
   };
 
   const handleChange = (e) => {
-    const val =
-      e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    const val = e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setForm((prev) => ({ ...prev, [e.target.name]: val }));
   };
 
   const handleGuardar = async () => {
     if (!form.nombre || !form.email || !form.id_rol) {
-      setModalMsg({
-        tipo: "err",
-        texto: "Nombre, email y rol son obligatorios.",
-      });
+      setModalMsg({ tipo: "err", texto: "Nombre, email y rol son obligatorios." });
       return;
     }
+
+    // Validar password si se ingresó
+    if (form.password) {
+      const v = validarPassword(form.password);
+      if (!v.longitud || !v.mayuscula || !v.minuscula || !v.numero) {
+        setModalMsg({
+          tipo: "err",
+          texto: "La contraseña no cumple los requisitos de seguridad.",
+        });
+        return;
+      }
+    }
+
     if (!editando && !form.password) {
-      setModalMsg({
-        tipo: "err",
-        texto: "La contraseña es obligatoria al crear.",
-      });
+      setModalMsg({ tipo: "err", texto: "La contraseña es obligatoria al crear." });
       return;
     }
+
     setGuardando(true);
     setModalMsg(null);
     try {
       const payload = {
         nombre: form.nombre,
-        email: form.email,
+        email:  form.email,
         id_rol: form.id_rol,
         activo: form.activo,
       };
@@ -176,14 +250,11 @@ export default function UsuariosList() {
 
   const handleEliminar = async (u) => {
     if (!confirm(`¿Eliminar PERMANENTEMENTE al usuario "${u.nombre}"?`)) return;
-
     try {
       await eliminarUsuario(u.id_usuario);
-
       mostrarMsg("ok", "Usuario eliminado correctamente.");
       cargarDatos();
-    } catch (error) {
-      console.error(error);
+    } catch {
       mostrarMsg("err", "No se pudo eliminar el usuario.");
     }
   };
@@ -202,6 +273,7 @@ export default function UsuariosList() {
   const abrirCambiarPwd = (u) => {
     setUsuarioPwd(u);
     setPwd(PWD_INICIAL);
+    setModalMsg(null);
     setModalPwd(true);
   };
 
@@ -214,6 +286,14 @@ export default function UsuariosList() {
       mostrarMsg("err", "Las contraseñas no coinciden.", false);
       return;
     }
+
+    // Validar requisitos
+    const v = validarPassword(pwd.password_nueva);
+    if (!v.longitud || !v.mayuscula || !v.minuscula || !v.numero) {
+      mostrarMsg("err", "La contraseña no cumple los requisitos de seguridad.", false);
+      return;
+    }
+
     setGuardandoPwd(true);
     try {
       await cambiarPassword(usuarioPwd.id_usuario, pwd);
@@ -257,10 +337,7 @@ export default function UsuariosList() {
       cargarDatos();
       setModalRol(false);
     } catch (err) {
-      mostrarMsg(
-        "err",
-        err.response?.data?.detail ?? "Error al guardar el rol.",
-      );
+      mostrarMsg("err", err.response?.data?.detail ?? "Error al guardar el rol.");
     } finally {
       setGuardandoRol(false);
     }
@@ -338,15 +415,8 @@ export default function UsuariosList() {
                 </option>
               ))}
             </select>
-            <span
-              style={{
-                fontSize: 13,
-                color: "var(--color-text-muted)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {usuariosFiltrados.length} resultado
-              {usuariosFiltrados.length !== 1 ? "s" : ""}
+            <span style={{ fontSize: 13, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
+              {usuariosFiltrados.length} resultado{usuariosFiltrados.length !== 1 ? "s" : ""}
             </span>
           </div>
 
@@ -363,16 +433,12 @@ export default function UsuariosList() {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={4} className={styles.empty}>
-                      Cargando...
-                    </td>
+                    <td colSpan={4} className={styles.empty}>Cargando...</td>
                   </tr>
                 )}
                 {!loading && !usuariosFiltrados.length && (
                   <tr>
-                    <td colSpan={4} className={styles.empty}>
-                      No se encontraron usuarios.
-                    </td>
+                    <td colSpan={4} className={styles.empty}>No se encontraron usuarios.</td>
                   </tr>
                 )}
                 {usuariosFiltrados.map((u) => (
@@ -389,23 +455,17 @@ export default function UsuariosList() {
                       </div>
                     </td>
                     <td>
-                      <span
-                        className={`${styles.rolBadge} ${rolClass(u.rol_nombre)}`}
-                      >
+                      <span className={`${styles.rolBadge} ${rolClass(u.rol_nombre)}`}>
                         {u.rol_nombre ?? "—"}
                       </span>
                     </td>
                     <td>
-                      <span
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 500,
-                          padding: "3px 8px",
-                          borderRadius: 10,
-                          background: u.activo ? "#EAF3DE" : "#FCEBEB",
-                          color: u.activo ? "#3B6D11" : "#A32D2D",
-                        }}
-                      >
+                      <span style={{
+                        fontSize: 12, fontWeight: 500,
+                        padding: "3px 8px", borderRadius: 10,
+                        background: u.activo ? "#EAF3DE" : "#FCEBEB",
+                        color: u.activo ? "#3B6D11" : "#A32D2D",
+                      }}>
                         {u.activo ? "Activo" : "Inactivo"}
                       </span>
                     </td>
@@ -453,37 +513,23 @@ export default function UsuariosList() {
         <div className={styles.rolesList}>
           {roles.map((r) => (
             <div key={r.id_rol} className={styles.roleItem}>
-              <div>
-                <div className={styles.roleItemName}>
-                  <span className={`${styles.rolBadge} ${rolClass(r.nombre)}`}>
-                    {r.nombre}
-                  </span>
-                </div>
+              <div className={styles.roleItemName}>
+                <span className={`${styles.rolBadge} ${rolClass(r.nombre)}`}>
+                  {r.nombre}
+                </span>
               </div>
               <div className={styles.roleItemActions}>
-                <button
-                  className={styles.btnIcon}
-                  onClick={() => abrirEditarRol(r)}
-                >
+                <button className={styles.btnIcon} onClick={() => abrirEditarRol(r)}>
                   Editar
                 </button>
-                <button
-                  className={styles.btnDanger}
-                  onClick={() => handleEliminarRol(r)}
-                >
+                <button className={styles.btnDanger} onClick={() => handleEliminarRol(r)}>
                   Eliminar
                 </button>
               </div>
             </div>
           ))}
           {!roles.length && (
-            <p
-              style={{
-                fontSize: 14,
-                color: "var(--color-text-muted)",
-                padding: 16,
-              }}
-            >
+            <p style={{ fontSize: 14, color: "var(--color-text-muted)", padding: 16 }}>
               No hay roles registrados.
             </p>
           )}
@@ -498,18 +544,12 @@ export default function UsuariosList() {
               <span className={styles.modalTitle}>
                 {editando ? "Editar usuario" : "Nuevo usuario"}
               </span>
-              <button className={styles.btnClose} onClick={cerrarModal}>
-                ✕
-              </button>
+              <button className={styles.btnClose} onClick={cerrarModal}>✕</button>
             </div>
 
             <div className={styles.modalBody}>
               {modalMsg && (
-                <div
-                  className={
-                    modalMsg.tipo === "ok" ? styles.msgOk : styles.msgErr
-                  }
-                >
+                <div className={modalMsg.tipo === "ok" ? styles.msgOk : styles.msgErr}>
                   {modalMsg.texto}
                 </div>
               )}
@@ -548,18 +588,13 @@ export default function UsuariosList() {
                   >
                     <option value="">— Seleccioná un rol —</option>
                     {roles.map((r) => (
-                      <option key={r.id_rol} value={r.id_rol}>
-                        {r.nombre}
-                      </option>
+                      <option key={r.id_rol} value={r.id_rol}>{r.nombre}</option>
                     ))}
                   </select>
                 </div>
 
                 <div className={`${styles.formField} ${styles.full}`}>
-                  <label
-                    className={styles.label}
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
-                  >
+                  <label className={styles.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input
                       type="checkbox"
                       name="activo"
@@ -586,12 +621,9 @@ export default function UsuariosList() {
                     value={form.password}
                     onChange={handleChange}
                     className={styles.input}
-                    placeholder={
-                      editando
-                        ? "Dejar vacío para no cambiar"
-                        : "Mínimo 8 caracteres"
-                    }
+                    placeholder={editando ? "Dejar vacío para no cambiar" : "Mínimo 8 caracteres"}
                   />
+                  <IndicadorPassword password={form.password} />
                 </div>
               </div>
             </div>
@@ -605,11 +637,7 @@ export default function UsuariosList() {
                 onClick={handleGuardar}
                 disabled={guardando}
               >
-                {guardando
-                  ? "Guardando..."
-                  : editando
-                    ? "Guardar cambios"
-                    : "Crear usuario"}
+                {guardando ? "Guardando..." : editando ? "Guardar cambios" : "Crear usuario"}
               </button>
             </div>
           </div>
@@ -624,21 +652,12 @@ export default function UsuariosList() {
               <span className={styles.modalTitle}>
                 Cambiar contraseña — {usuarioPwd?.nombre}
               </span>
-              <button
-                className={styles.btnClose}
-                onClick={() => setModalPwd(false)}
-              >
-                ✕
-              </button>
+              <button className={styles.btnClose} onClick={() => setModalPwd(false)}>✕</button>
             </div>
 
             <div className={styles.modalBody}>
               {modalMsg && (
-                <div
-                  className={
-                    modalMsg.tipo === "ok" ? styles.msgOk : styles.msgErr
-                  }
-                >
+                <div className={modalMsg.tipo === "ok" ? styles.msgOk : styles.msgErr}>
                   {modalMsg.texto}
                 </div>
               )}
@@ -649,9 +668,7 @@ export default function UsuariosList() {
                   <input
                     type="password"
                     value={pwd.password_actual}
-                    onChange={(e) =>
-                      setPwd((p) => ({ ...p, password_actual: e.target.value }))
-                    }
+                    onChange={(e) => setPwd((p) => ({ ...p, password_actual: e.target.value }))}
                     className={styles.input}
                     placeholder="Contraseña actual"
                   />
@@ -661,38 +678,32 @@ export default function UsuariosList() {
                   <input
                     type="password"
                     value={pwd.password_nueva}
-                    onChange={(e) =>
-                      setPwd((p) => ({ ...p, password_nueva: e.target.value }))
-                    }
+                    onChange={(e) => setPwd((p) => ({ ...p, password_nueva: e.target.value }))}
                     className={styles.input}
                     placeholder="Mínimo 8 caracteres"
                   />
+                  <IndicadorPassword password={pwd.password_nueva} />
                 </div>
                 <div className={styles.formField}>
-                  <label className={styles.label}>
-                    Confirmar nueva contraseña *
-                  </label>
+                  <label className={styles.label}>Confirmar nueva contraseña *</label>
                   <input
                     type="password"
                     value={pwd.password_confirmacion}
-                    onChange={(e) =>
-                      setPwd((p) => ({
-                        ...p,
-                        password_confirmacion: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => setPwd((p) => ({ ...p, password_confirmacion: e.target.value }))}
                     className={styles.input}
                     placeholder="Repetí la nueva contraseña"
                   />
+                  {pwd.password_confirmacion && pwd.password_nueva !== pwd.password_confirmacion && (
+                    <span style={{ fontSize: 12, color: "#A32D2D", marginTop: 4 }}>
+                      Las contraseñas no coinciden.
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className={styles.modalFooter}>
-              <button
-                className={styles.btnSecondary}
-                onClick={() => setModalPwd(false)}
-              >
+              <button className={styles.btnSecondary} onClick={() => setModalPwd(false)}>
                 Cancelar
               </button>
               <button
@@ -719,12 +730,7 @@ export default function UsuariosList() {
               <span className={styles.modalTitle}>
                 {editandoRol ? "Editar rol" : "Nuevo rol"}
               </span>
-              <button
-                className={styles.btnClose}
-                onClick={() => setModalRol(false)}
-              >
-                ✕
-              </button>
+              <button className={styles.btnClose} onClick={() => setModalRol(false)}>✕</button>
             </div>
 
             <div className={styles.modalBody}>
@@ -740,10 +746,7 @@ export default function UsuariosList() {
             </div>
 
             <div className={styles.modalFooter}>
-              <button
-                className={styles.btnSecondary}
-                onClick={() => setModalRol(false)}
-              >
+              <button className={styles.btnSecondary} onClick={() => setModalRol(false)}>
                 Cancelar
               </button>
               <button
@@ -751,11 +754,7 @@ export default function UsuariosList() {
                 onClick={handleGuardarRol}
                 disabled={guardandoRol || !formRol.nombre.trim()}
               >
-                {guardandoRol
-                  ? "Guardando..."
-                  : editandoRol
-                    ? "Guardar"
-                    : "Crear rol"}
+                {guardandoRol ? "Guardando..." : editandoRol ? "Guardar" : "Crear rol"}
               </button>
             </div>
           </div>
