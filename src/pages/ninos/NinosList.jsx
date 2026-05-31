@@ -10,6 +10,13 @@ import {
 } from "../../api/ninosApi";
 import styles from "./Ninos.module.css";
 
+import {
+  getServiciosNino,
+  asignarServicioNino,
+  desasignarServicioNino,
+} from "../../api/serviciosApi";
+import { getServicios } from "../../api/serviciosApi";
+
 // ─── Íconos SVG (del trabajo 2) ───────────────────────────────────────────────
 function EditIcon() {
   return (
@@ -108,6 +115,10 @@ export default function NinosList() {
   const [personas, setPersonas] = useState([]);
   const [sala, setSala] = useState(null);
   const [loadDet, setLoadDet] = useState(false);
+  const [servicios, setServicios] = useState([]);
+  const [todosServicios, setTodosServicios] = useState([]);
+  const [servicioElegido, setServicioElegido] = useState("");
+  const [asignando, setAsignando] = useState(false);
 
   // Filtro con useMemo (del trabajo 2 — más eficiente)
   const ninosFiltrados = useMemo(() => {
@@ -143,11 +154,15 @@ export default function NinosList() {
     setTutores([]);
     setPersonas([]);
     setSala(null);
+    setServicios([]);
+    setServicioElegido("");
     try {
-      const [t, p, s] = await Promise.all([
+      const [t, p, s, sv, todos] = await Promise.all([
         getTutoresNino(nino.id_nino),
         getPersonasAutorizadas(nino.id_nino),
         getSalas(),
+        getServiciosNino(nino.id_nino),
+        getServicios(),
       ]);
       setTutores(t.data);
       setPersonas(p.data.results ?? p.data);
@@ -157,6 +172,8 @@ export default function NinosList() {
           sala.asignaciones?.some((a) => a.id_nino === nino.id_nino),
         ) ?? null,
       );
+      setServicios(sv.data);
+      setTodosServicios(todos.data.results ?? todos.data);
     } finally {
       setLoadDet(false);
     }
@@ -167,8 +184,40 @@ export default function NinosList() {
     setTutores([]);
     setPersonas([]);
     setSala(null);
+    setServicios([]); // ← agregá esto
   };
 
+  const handleAsignarServicio = async () => {
+    if (!servicioElegido || !detalle) return;
+    setAsignando(true);
+    try {
+      await asignarServicioNino({
+        id_nino: detalle.id_nino,
+        id_servicio: servicioElegido,
+      });
+      const { data } = await getServiciosNino(detalle.id_nino);
+      setServicios(data);
+      setServicioElegido("");
+    } catch (err) {
+      alert(err.response?.data?.detail ?? "Error al asignar servicio.");
+    } finally {
+      setAsignando(false);
+    }
+  };
+
+  const handleDesasignarServicio = async (id_servicio) => {
+    if (!confirm("¿Quitar este servicio del niño?")) return;
+    try {
+      await desasignarServicioNino({
+        id_nino: detalle.id_nino,
+        id_servicio,
+      });
+      const { data } = await getServiciosNino(detalle.id_nino);
+      setServicios(data);
+    } catch (err) {
+      alert(err.response?.data?.detail ?? "Error al quitar servicio.");
+    }
+  };
   // Confirmación con SweetAlert2 (del trabajo 2)
   const handleEliminar = async (id) => {
     const result = await Swal.fire({
@@ -455,6 +504,133 @@ export default function NinosList() {
                   <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
                     Sin personas autorizadas.
                   </p>
+                )}
+              </div>
+              <div className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <span className={styles.sectionTitle}>
+                    Servicios ({servicios.length})
+                  </span>
+                </div>
+
+                {loadDet && (
+                  <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
+                    Cargando...
+                  </p>
+                )}
+
+                {/* Lista de servicios asignados */}
+                {!loadDet && !servicios.length && (
+                  <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
+                    Sin servicios asignados.
+                  </p>
+                )}
+                {servicios.map((sv) => (
+                  <div
+                    key={sv.id_servicio}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "10px 12px",
+                      background: "var(--color-bg)",
+                      border: "1px solid var(--color-border)",
+                      borderRadius: "var(--radius-sm)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 2,
+                      }}
+                    >
+                      <span style={{ fontSize: 14, fontWeight: 500 }}>
+                        {sv.nombre}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 500,
+                          padding: "2px 8px",
+                          borderRadius: 10,
+                          background: "#E6F1FB",
+                          color: "#185FA5",
+                          alignSelf: "flex-start",
+                        }}
+                      >
+                        {sv.tipo}
+                      </span>
+                    </div>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: "var(--color-primary-dk)",
+                        }}
+                      >
+                        Bs. {parseFloat(sv.precio).toFixed(2)}
+                      </span>
+                      <button
+                        className={styles.btnDanger}
+                        style={{ padding: "4px 8px", fontSize: 12 }}
+                        onClick={() => handleDesasignarServicio(sv.id_servicio)}
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Selector para asignar nuevo servicio */}
+                {!loadDet && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                    <select
+                      value={servicioElegido}
+                      onChange={(e) => setServicioElegido(e.target.value)}
+                      className={styles.btnSecondary}
+                      style={{
+                        flex: 1,
+                        padding: "7px 10px",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: "var(--radius-sm)",
+                        fontSize: 13,
+                        background: "var(--color-bg)",
+                        color: "var(--color-text)",
+                        outline: "none",
+                      }}
+                    >
+                      <option value="">— Asignar servicio —</option>
+                      {todosServicios
+                        .filter(
+                          (s) =>
+                            s.activo &&
+                            !servicios.some(
+                              (sv) => sv.id_servicio === s.id_servicio,
+                            ),
+                        )
+                        .map((s) => (
+                          <option key={s.id_servicio} value={s.id_servicio}>
+                            {s.nombre} — Bs. {parseFloat(s.precio).toFixed(2)}
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      className={styles.btnPrimary}
+                      style={{
+                        padding: "7px 14px",
+                        fontSize: 13,
+                        whiteSpace: "nowrap",
+                      }}
+                      onClick={handleAsignarServicio}
+                      disabled={asignando || !servicioElegido}
+                    >
+                      {asignando ? "..." : "Asignar"}
+                    </button>
+                  </div>
                 )}
               </div>
 
