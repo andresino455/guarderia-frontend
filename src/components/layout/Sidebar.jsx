@@ -84,6 +84,12 @@ const NAV_ITEMS = [
     icon: "💾",
     roles: ["Administrador"],
   },
+  {
+    to: "/camaras",
+    label: "Cámaras",
+    icon: "📷",
+    roles: ["Administrador", "Personal"],
+  },
 ];
 
 export default function Sidebar() {

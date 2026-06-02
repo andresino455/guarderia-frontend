@@ -22,6 +22,7 @@ import ActividadesList from "../pages/actividades/ActividadesList";
 import ReportesPage from "../pages/reportes/ReportesPage";
 import BackupPage from "../pages/backup/BackupPage";
 import BitacoraPage from "../pages/auditoria/BitacoraPage";
+import CamarasPage from "../pages/camaras/CamarasPage";
 
 export default function AppRouter() {
   return (
@@ -66,6 +67,7 @@ export default function AppRouter() {
           <Route path="/reportes" element={<ReportesPage />} />
           <Route path="/bitacora" element={<BitacoraPage />} />
           <Route path="/backup" element={<BackupPage />} />
+          <Route path="/camaras" element={<CamarasPage />} />
         </Route>
       </Route>
 

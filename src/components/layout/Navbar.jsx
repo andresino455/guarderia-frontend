@@ -2,14 +2,15 @@ import { useLocation } from 'react-router-dom'
 import styles from './Navbar.module.css'
 
 const titles = {
-  '/dashboard':  'Dashboard',
-  '/ninos':      'Gestión de niños',
-  '/tutores':    'Tutores y padres',
-  '/asistencia': 'Control de asistencia',
-  '/salud':      'Salud y medicación',
-  '/servicios':  'Servicios',
-  '/pagos':      'Pagos',
-}
+  "/dashboard": "Dashboard",
+  "/ninos": "Gestión de niños",
+  "/tutores": "Tutores y padres",
+  "/asistencia": "Control de asistencia",
+  "/salud": "Salud y medicación",
+  "/servicios": "Servicios",
+  "/pagos": "Pagos",
+  "/camaras": "Cámaras",
+};
 
 export default function Navbar() {
   const { pathname } = useLocation()
