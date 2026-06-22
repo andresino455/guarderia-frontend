@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
 import PrivateLayout from "../components/layout/PrivateLayout";
 import Login from "../pages/auth/Login";
+import Registro from "../pages/auth/Registro";
 import Dashboard from "../pages/dashboard/Dashboard";
 import NinosList from "../pages/ninos/NinosList";
 import NinosForm from "../pages/ninos/NinosForm";
@@ -23,14 +24,16 @@ import ReportesPage from "../pages/reportes/ReportesPage";
 import BackupPage from "../pages/backup/BackupPage";
 import BitacoraPage from "../pages/auditoria/BitacoraPage";
 import CamarasPage from "../pages/camaras/CamarasPage";
+import ConfiguracionPage from "../pages/configuracion/ConfiguracionPage";
 
 export default function AppRouter() {
   return (
     <Routes>
-      {/* Pública */}
+      {/* Rutas públicas */}
       <Route path="/login" element={<Login />} />
+      <Route path="/registro" element={<Registro />} />
 
-      {/* Privadas — todas dentro del layout */}
+      {/* Rutas privadas */}
       <Route element={<PrivateRoute />}>
         <Route element={<PrivateLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -52,22 +55,22 @@ export default function AppRouter() {
           <Route path="/servicios/nuevo" element={<ServiciosForm />} />
           <Route path="/servicios/:id/editar" element={<ServiciosForm />} />
 
-          <Route path="/usuarios" element={<UsuariosList />} />
-
           <Route path="/pagos" element={<PagosList />} />
           <Route path="/pagos/nuevo" element={<PagosForm />} />
+
           <Route
             path="/personas-autorizadas"
             element={<PersonasAutorizadasList />}
           />
+          <Route path="/usuarios" element={<UsuariosList />} />
           <Route path="/actividades" element={<ActividadesList />} />
-
           <Route path="/retiros" element={<RetirosPage />} />
           <Route path="/salas" element={<SalasList />} />
           <Route path="/reportes" element={<ReportesPage />} />
           <Route path="/bitacora" element={<BitacoraPage />} />
           <Route path="/backup" element={<BackupPage />} />
           <Route path="/camaras" element={<CamarasPage />} />
+          <Route path="/configuracion" element={<ConfiguracionPage />} />
         </Route>
       </Route>
 

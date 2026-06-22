@@ -2,7 +2,6 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import styles from "./Sidebar.module.css";
 
-// Cada item tiene un array de roles que pueden verlo
 const NAV_ITEMS = [
   {
     to: "/dashboard",
@@ -54,12 +53,7 @@ const NAV_ITEMS = [
     icon: "◈",
     roles: ["Administrador", "Personal"],
   },
-  {
-    to: "/usuarios",
-    label: "Usuarios",
-    icon: "◈",
-    roles: ["Administrador"],
-  },
+  { to: "/usuarios", label: "Usuarios", icon: "◈", roles: ["Administrador"] },
   {
     to: "/retiros",
     label: "Retiros",
@@ -72,33 +66,27 @@ const NAV_ITEMS = [
     icon: "📊",
     roles: ["Administrador", "Personal"],
   },
-  {
-    to: "/bitacora",
-    label: "Bitácora",
-    icon: "📋",
-    roles: ["Administrador"],
-  },
-  {
-    to: "/backup",
-    label: "Backup",
-    icon: "💾",
-    roles: ["Administrador"],
-  },
+  { to: "/bitacora", label: "Bitácora", icon: "📋", roles: ["Administrador"] },
+  { to: "/backup", label: "Backup", icon: "💾", roles: ["Administrador"] },
   {
     to: "/camaras",
     label: "Cámaras",
     icon: "📷",
     roles: ["Administrador", "Personal"],
   },
+  {
+    to: "/configuracion",
+    label: "Configuración",
+    icon: "⚙️",
+    roles: ["Administrador"],
+  },
 ];
 
 export default function Sidebar() {
-  const { usuario, logout } = useAuth();
+  const { usuario, guarderia, logout } = useAuth();
   const navigate = useNavigate();
 
   const rol = usuario?.rol_nombre;
-
-  // Filtrar items según el rol del usuario
   const itemsVisibles = NAV_ITEMS.filter((item) => item.roles.includes(rol));
 
   const handleLogout = () => {
@@ -108,13 +96,20 @@ export default function Sidebar() {
 
   return (
     <aside className={styles.sidebar}>
-      {/* Logo */}
+      {/* Brand — muestra la guardería activa */}
       <div className={styles.brand}>
-        <div className={styles.brandIcon}>G</div>
-        <span className={styles.brandName}>Guardería</span>
+        <div className={styles.brandIcon}>
+          {guarderia?.nombre?.charAt(0)?.toUpperCase() ?? "G"}
+        </div>
+        <div className={styles.brandText}>
+          <span className={styles.brandName}>
+            {guarderia?.nombre ?? "Guardería"}
+          </span>
+          <span className={styles.brandSub}>Sistema de gestión</span>
+        </div>
       </div>
 
-      {/* Navegación filtrada por rol */}
+      {/* Nav */}
       <nav className={styles.nav}>
         {itemsVisibles.map((item) => (
           <NavLink
@@ -130,19 +125,25 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Usuario + logout al fondo */}
+      {/* Footer con usuario */}
       <div className={styles.footer}>
+        {/* Info de guardería pequeña */}
+        {guarderia && (
+          <div className={styles.guarderiaTag}>🏫 {guarderia.nombre}</div>
+        )}
+
         <div className={styles.userInfo}>
           <div className={styles.avatar}>
-            {usuario?.nombre?.charAt(0).toUpperCase()}
+            {usuario?.nombre?.charAt(0)?.toUpperCase()}
           </div>
           <div className={styles.userText}>
             <span className={styles.userName}>{usuario?.nombre}</span>
             <span className={styles.userRole}>{usuario?.rol_nombre}</span>
           </div>
         </div>
+
         <button className={styles.logoutBtn} onClick={handleLogout}>
-          Salir
+          Cerrar sesión
         </button>
       </div>
     </aside>

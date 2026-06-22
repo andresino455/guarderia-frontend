@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import styles from "./Login.module.css";
 
 export default function Login() {
-  const { login, loading } = useAuth();
+  const { login, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ email: "", password: "" });
@@ -14,10 +14,14 @@ export default function Login() {
   const [countdown, setCountdown] = useState(0);
   const [intentosRest, setIntentosR] = useState(null);
 
-  // ── Countdown cuando está bloqueado ──────────────────────────
+  // Si ya está autenticado, redirigir
+  useEffect(() => {
+    if (!loading && isAuthenticated) navigate("/dashboard");
+  }, [loading, isAuthenticated, navigate]);
+
+  // Countdown de bloqueo
   useEffect(() => {
     if (!bloqueado || countdown <= 0) return;
-
     const interval = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -30,15 +34,11 @@ export default function Login() {
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(interval);
   }, [bloqueado, countdown]);
 
-  const formatCountdown = (segundos) => {
-    const m = Math.floor(segundos / 60);
-    const s = segundos % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  };
+  const formatCountdown = (s) =>
+    `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -48,63 +48,30 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (bloqueado) return;
-
     setSubmitting(true);
     setError(null);
 
-    try {
-      const resultado = await loginDirecto(form.email, form.password);
+    const resultado = await login(form.email, form.password);
 
-      if (resultado.ok) {
-        navigate("/dashboard");
-        return;
-      }
-
-      // Manejar errores
+    if (resultado.ok) {
+      navigate("/dashboard");
+    } else {
       const data = resultado.data;
+      const status = resultado.status;
 
-      if (resultado.status === 429 || data?.bloqueado) {
+      if (status === 429 || data?.bloqueado) {
         setBloqueado(true);
         setCountdown(data?.segundos_restantes ?? 300);
         setError(data?.detail ?? "Cuenta bloqueada temporalmente.");
         setIntentosR(0);
       } else {
         setError(data?.detail ?? "Credenciales inválidas.");
-        if (data?.intentos_restantes !== undefined) {
+        if (data?.intentos_restantes !== undefined)
           setIntentosR(data.intentos_restantes);
-        }
       }
-    } finally {
-      setSubmitting(false);
     }
-  };
 
-  // Llamada directa a la API para obtener el status y body completos
-  const loginDirecto = async (email, password) => {
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/usuarios/login/`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        },
-      );
-      const data = await res.json();
-
-      if (res.ok) {
-        // Guardar tokens manualmente
-        localStorage.setItem("access_token", data.access);
-        localStorage.setItem("refresh_token", data.refresh);
-        // Recargar el contexto de auth
-        await login(email, password);
-        return { ok: true };
-      }
-
-      return { ok: false, status: res.status, data };
-    } catch {
-      return { ok: false, status: 500, data: { detail: "Error de conexión." } };
-    }
+    setSubmitting(false);
   };
 
   if (loading) return null;
@@ -155,15 +122,9 @@ export default function Login() {
             />
           </div>
 
-          {/* Intentos restantes */}
+          {/* Puntos de intentos */}
           {intentosRest !== null && !bloqueado && (
-            <div
-              style={{
-                display: "flex",
-                gap: 6,
-                justifyContent: "center",
-              }}
-            >
+            <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
               {[...Array(3)].map((_, i) => (
                 <div
                   key={i}
@@ -224,6 +185,24 @@ export default function Login() {
                 : "Ingresar"}
           </button>
         </form>
+
+        {/* Link a registro */}
+        <p
+          style={{
+            textAlign: "center",
+            fontSize: 13,
+            color: "var(--color-text-muted)",
+            marginTop: 8,
+          }}
+        >
+          ¿No tenés guardería?{" "}
+          <Link
+            to="/registro"
+            style={{ color: "var(--color-primary)", fontWeight: 500 }}
+          >
+            Crear una gratis
+          </Link>
+        </p>
       </div>
     </div>
   );
