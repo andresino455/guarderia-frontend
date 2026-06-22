@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useGrabadorAudio } from '../../hooks/useGrabadorAudio'
-import { procesarVoz } from '../../api/reportesApi'
+import { useGrabadorAudio } from "../../hooks/UseGrabadorAudio";
+import { procesarVoz } from "../../api/ReportesApi";
 
 // Ejemplos de comandos para mostrarle al usuario
 const EJEMPLOS = [
